@@ -1,0 +1,7 @@
+{
+  "name": "HooterApp",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
