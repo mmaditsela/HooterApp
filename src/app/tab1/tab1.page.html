@@ -1,17 +1,47 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>
-      Tab 1
-    </ion-title>
+    <ion-title>Home</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">Tab 1</ion-title>
+      <ion-title size="large">Home</ion-title>
     </ion-toolbar>
   </ion-header>
 
-  <app-explore-container name="Tab 1 page"></app-explore-container>
+  <ion-grid>
+    <ion-row>
+      <ion-col size="12">
+        <ion-list>
+          <ion-item-divider>
+            <ion-label>Available Routes</ion-label>
+          </ion-item-divider>
+
+          <ion-card *ngFor="let r of routes" style="margin:12px">
+            <ion-card-header>
+              <ion-card-title>{{ groupsMap[r.groupId]?.name || 'Route' }}</ion-card-title>
+              <ion-card-subtitle>
+                Driver: {{ driversMap[r.driverId]?.name }} {{ driversMap[r.driverId]?.surname }}
+              </ion-card-subtitle>
+            </ion-card-header>
+
+            <ion-card-content>
+              <p><strong>Time:</strong> {{ groupsMap[r.groupId]?.startTime }} - {{ groupsMap[r.groupId]?.endTime }}</p>
+              <p><strong>Days:</strong> {{ groupsMap[r.groupId]?.activeDays?.join(', ') || '' }}</p>
+              <p><strong>Joining Code:</strong> {{ groupsMap[r.groupId]?.joiningCode }}</p>
+              <p><strong>Passengers:</strong> {{ passengerCount(r.groupId) }}</p>
+              <p><strong>State:</strong> {{ r.routeState }}</p>
+            </ion-card-content>
+
+            <ion-card-content>
+              <ion-button expand="block" (click)="viewRoute(r.routeId)">View</ion-button>
+            </ion-card-content>
+          </ion-card>
+
+        </ion-list>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 </ion-content>

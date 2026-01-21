@@ -1,17 +1,129 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>
-      Tab 2
-    </ion-title>
+    <ion-title>Routes</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">Tab 2</ion-title>
+      <ion-title size="large">Routes</ion-title>
     </ion-toolbar>
   </ion-header>
 
-  <app-explore-container name="Tab 2 page"></app-explore-container>
+  <!-- Route Details Card (Top Half) -->
+  <div *ngIf="selectedRoute && groupDetails && driverDetails" class="route-details-section" [class.collapsed]="!routeDetailsExpanded">
+    <div class="route-details-header">
+      <h2>{{ groupDetails.name }}</h2>
+      <ion-button fill="clear" (click)="toggleRouteDetails()">
+        <ion-icon [name]="routeDetailsExpanded ? 'chevron-up' : 'chevron-down'"></ion-icon>
+      </ion-button>
+    </div>
+
+    <ion-card *ngIf="routeDetailsExpanded">
+      <ion-card-header>
+        <ion-card-title>{{ groupDetails.name }}</ion-card-title>
+        <ion-card-subtitle>Route State: {{ selectedRoute.routeState }}</ion-card-subtitle>
+      </ion-card-header>
+
+      <ion-card-content>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="12">
+              <h3>Route Information</h3>
+            </ion-col>
+          </ion-row>
+
+          <ion-row>
+            <ion-col size="6">
+              <p><strong>Start Time:</strong></p>
+              <p>{{ groupDetails.startTime }}</p>
+            </ion-col>
+            <ion-col size="6">
+              <p><strong>End Time:</strong></p>
+              <p>{{ groupDetails.endTime }}</p>
+            </ion-col>
+          </ion-row>
+
+          <ion-row>
+            <ion-col size="12">
+              <p><strong>Active Days:</strong></p>
+              <p>{{ groupDetails.activeDays.join(', ') }}</p>
+            </ion-col>
+          </ion-row>
+
+          <ion-row>
+            <ion-col size="12">
+              <p><strong>Joining Code:</strong></p>
+              <p>{{ groupDetails.joiningCode }}</p>
+            </ion-col>
+          </ion-row>
+
+          <ion-row>
+            <ion-col size="12">
+              <ion-item-divider>
+                <ion-label>Driver Information</ion-label>
+              </ion-item-divider>
+            </ion-col>
+          </ion-row>
+
+          <ion-row>
+            <ion-col size="12">
+              <p><strong>Name:</strong></p>
+              <p>{{ driverDetails.name }} {{ driverDetails.surname }}</p>
+            </ion-col>
+          </ion-row>
+
+          <ion-row>
+            <ion-col size="6">
+              <p><strong>Phone:</strong></p>
+              <p>{{ driverDetails.contact.phone || 'N/A' }}</p>
+            </ion-col>
+            <ion-col size="6">
+              <p><strong>Email:</strong></p>
+              <p>{{ driverDetails.contact.email || 'N/A' }}</p>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Map Component (Middle Section) -->
+  <app-map 
+    *ngIf="selectedRoute && driverDetails && passengers.length > 0"
+    [driver]="driverDetails" 
+    [passengers]="passengers">
+  </app-map>
+
+  <!-- Passengers Section (Bottom Half) -->
+  <div class="passengers-section" *ngIf="passengers.length > 0">
+    <ion-item-divider>
+      <ion-label>Passengers ({{ passengers.length }})</ion-label>
+    </ion-item-divider>
+
+    <ion-list>
+      <ion-item *ngFor="let p of passengers">
+        <ion-label>
+          <h2>{{ p.nameSurname }}</h2>
+          <p>Phone: {{ p.contact.phone || 'N/A' }}</p>
+          <p>Email: {{ p.contact.email || 'N/A' }}</p>
+        </ion-label>
+        <ion-badge 
+          slot="end" 
+          [color]="p.status === 'ready' ? 'success' : p.status === 'not-ready' ? 'warning' : p.status === 'absent' ? 'danger' : 'medium'">
+          {{ p.status | titlecase }}
+        </ion-badge>
+      </ion-item>
+    </ion-list>
+  </div>
+
+  <!-- No Route Selected Message -->
+  <div *ngIf="!selectedRoute" class="empty-state">
+    <ion-content>
+      <ion-text class="ion-text-center">
+        <p>No route selected. Click View on a route to see details.</p>
+      </ion-text>
+    </ion-content>
+  </div>
 </ion-content>
