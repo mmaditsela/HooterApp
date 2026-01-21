@@ -17,7 +17,7 @@ export class Tab2Page implements OnInit {
   groupDetails: GroupRoutes | undefined;
   driverDetails: Driver | undefined;
   passengers: Passenger[] = [];
-  routeDetailsExpanded: boolean = true;
+  routeDetailsExpanded: boolean = false;
 
   constructor(
     private router: Router,
