@@ -14,12 +14,14 @@
   <ion-grid>
     <ion-row>
       <ion-col size="12">
-        <ion-list>
+        <!-- Active Routes Section -->
+        <ion-list *ngIf="activeRoutes.length > 0">
           <ion-item-divider>
-            <ion-label>Available Routes</ion-label>
+            <ion-label>Active Routes</ion-label>
+            <ion-badge slot="end" color="success">{{ activeRoutes.length }}</ion-badge>
           </ion-item-divider>
 
-          <ion-card *ngFor="let r of routes" style="margin:12px">
+          <ion-card *ngFor="let r of activeRoutes" style="margin:12px;border-left: 4px solid #10b981;">
             <ion-card-header>
               <ion-card-title>{{ groupsMap[r.groupId]?.name || 'Route' }}</ion-card-title>
               <ion-card-subtitle>
@@ -32,15 +34,79 @@
               <p><strong>Days:</strong> {{ groupsMap[r.groupId]?.activeDays?.join(', ') || '' }}</p>
               <p><strong>Joining Code:</strong> {{ groupsMap[r.groupId]?.joiningCode }}</p>
               <p><strong>Passengers:</strong> {{ passengerCount(r.groupId) }}</p>
-              <p><strong>State:</strong> {{ r.routeState }}</p>
+              <ion-badge color="success">{{ r.routeState }}</ion-badge>
             </ion-card-content>
 
             <ion-card-content>
               <ion-button expand="block" (click)="viewRoute(r.routeId)">View</ion-button>
             </ion-card-content>
           </ion-card>
-
         </ion-list>
+
+        <!-- Not-Active Routes Section -->
+        <ion-list *ngIf="notActiveRoutes.length > 0">
+          <ion-item-divider>
+            <ion-label>Available Routes</ion-label>
+            <ion-badge slot="end" color="warning">{{ notActiveRoutes.length }}</ion-badge>
+          </ion-item-divider>
+
+          <ion-card *ngFor="let r of notActiveRoutes" style="margin:12px;border-left: 4px solid #f59e0b;">
+            <ion-card-header>
+              <ion-card-title>{{ groupsMap[r.groupId]?.name || 'Route' }}</ion-card-title>
+              <ion-card-subtitle>
+                Driver: {{ driversMap[r.driverId]?.name }} {{ driversMap[r.driverId]?.surname }}
+              </ion-card-subtitle>
+            </ion-card-header>
+
+            <ion-card-content>
+              <p><strong>Time:</strong> {{ groupsMap[r.groupId]?.startTime }} - {{ groupsMap[r.groupId]?.endTime }}</p>
+              <p><strong>Days:</strong> {{ groupsMap[r.groupId]?.activeDays?.join(', ') || '' }}</p>
+              <p><strong>Joining Code:</strong> {{ groupsMap[r.groupId]?.joiningCode }}</p>
+              <p><strong>Passengers:</strong> {{ passengerCount(r.groupId) }}</p>
+              <ion-badge color="warning">{{ r.routeState }}</ion-badge>
+            </ion-card-content>
+
+            <ion-card-content>
+              <ion-button expand="block" (click)="viewRoute(r.routeId)">View</ion-button>
+            </ion-card-content>
+          </ion-card>
+        </ion-list>
+
+        <!-- Completed Routes Section -->
+        <ion-list *ngIf="completedRoutes.length > 0">
+          <ion-item-divider>
+            <ion-label>Completed Routes</ion-label>
+            <ion-badge slot="end" color="success">{{ completedRoutes.length }}</ion-badge>
+          </ion-item-divider>
+
+          <ion-card *ngFor="let r of completedRoutes" style="margin:12px;border-left: 4px solid #6b7280;opacity:0.7;">
+            <ion-card-header>
+              <ion-card-title>{{ groupsMap[r.groupId]?.name || 'Route' }}</ion-card-title>
+              <ion-card-subtitle>
+                Driver: {{ driversMap[r.driverId]?.name }} {{ driversMap[r.driverId]?.surname }}
+              </ion-card-subtitle>
+            </ion-card-header>
+
+            <ion-card-content>
+              <p><strong>Time:</strong> {{ groupsMap[r.groupId]?.startTime }} - {{ groupsMap[r.groupId]?.endTime }}</p>
+              <p><strong>Days:</strong> {{ groupsMap[r.groupId]?.activeDays?.join(', ') || '' }}</p>
+              <p><strong>Joining Code:</strong> {{ groupsMap[r.groupId]?.joiningCode }}</p>
+              <p><strong>Passengers:</strong> {{ passengerCount(r.groupId) }}</p>
+              <ion-badge color="medium">{{ r.routeState }}</ion-badge>
+            </ion-card-content>
+
+            <ion-card-content>
+              <ion-button expand="block" (click)="viewRoute(r.routeId)">View</ion-button>
+            </ion-card-content>
+          </ion-card>
+        </ion-list>
+
+        <!-- No Routes Message -->
+        <div *ngIf="routes.length === 0" class="empty-state">
+          <ion-text class="ion-text-center">
+            <p>No routes available</p>
+          </ion-text>
+        </div>
       </ion-col>
     </ion-row>
   </ion-grid>

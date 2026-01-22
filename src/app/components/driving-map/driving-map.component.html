@@ -1,0 +1,57 @@
+<div class="driving-map-container">
+  <!-- Active Route Map View -->
+  <div *ngIf="activeRoute" class="map-wrapper">
+    <div class="distance-panel">
+      <h3>Remaining Stops</h3>
+      <ion-list>
+        <ion-item *ngFor="let stop of routeStops.slice(currentStopIndex); let i = index">
+          <ion-label>
+            <h2>{{ stop.passenger.nameSurname }}</h2>
+            <p>{{ stop.type | titlecase }}</p>
+          </ion-label>
+          <ion-badge slot="end" [color]="stop.type === 'pickup' ? 'primary' : 'secondary'">
+            {{ stop.distance.toFixed(0) }}m
+          </ion-badge>
+        </ion-item>
+      </ion-list>
+    </div>
+
+    <div #mapContainer class="map-container" [class.loading]="isLoading">
+      <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
+    </div>
+  </div>
+
+  <!-- No Active Route - Show Completed Routes -->
+  <div *ngIf="!activeRoute" class="no-active-route">
+    <ion-content>
+      <div *ngIf="completedRoutes.length === 0" class="empty-state">
+        <ion-text color="medium">
+          <h3>No Active Route</h3>
+          <p>Activate a route to start driving simulation</p>
+        </ion-text>
+      </div>
+
+      <div *ngIf="completedRoutes.length > 0">
+        <ion-item-divider>
+          <ion-label>Completed Routes Today</ion-label>
+          <ion-badge slot="end" color="success">{{ completedRoutes.length }}</ion-badge>
+        </ion-item-divider>
+
+        <ion-card *ngFor="let item of completedRoutes" style="margin: 12px;">
+          <ion-card-header>
+            <ion-card-title>{{ item.group.name }}</ion-card-title>
+            <ion-card-subtitle>
+              Driver: {{ item.driver.name }} {{ item.driver.surname }}
+            </ion-card-subtitle>
+          </ion-card-header>
+
+          <ion-card-content>
+            <p><strong>Time:</strong> {{ item.group.startTime }} - {{ item.group.endTime }}</p>
+            <p><strong>Days:</strong> {{ item.group.activeDays?.join(', ') || '' }}</p>
+            <p><strong>Status:</strong> <ion-badge color="success">{{ item.route.routeState }}</ion-badge></p>
+          </ion-card-content>
+        </ion-card>
+      </div>
+    </ion-content>
+  </div>
+</div>

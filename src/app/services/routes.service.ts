@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Driver } from '../models/driver.model';
 import { GroupRoutes } from '../models/group-routes.model';
 import { Passenger } from '../models/passenger.model';
@@ -10,6 +11,8 @@ export class RoutesService {
   private groups: GroupRoutes[] = [];
   private passengers: Passenger[] = [];
   private routes: Route[] = [];
+  private activeRouteSubject = new BehaviorSubject<string | null>(null);
+  public activeRoute$ = this.activeRouteSubject.asObservable();
 
   constructor() {
     this.seedData();
@@ -63,20 +66,22 @@ export class RoutesService {
     }
 
     // Create groups and routes
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
       const g: GroupRoutes = {
         id: this.guid(),
         name: `Route ${i + 1}`,
-        startTime: `${7 + i}:00`,
-        endTime: `${8 + i}:00`,
+        startTime: `${7 + (i % 8)}:00`,
+        endTime: `${8 + (i % 8)}:00`,
         activeDays: i % 2 === 0 ? ['Mon', 'Wed', 'Fri'] : ['Tue', 'Thu'],
         joiningCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
       };
       this.groups.push(g);
 
-      const driver = this.drivers[i % this.drivers.length];
+      let driver = this.drivers[0]; // Assign all routes to driver0 first
 
-      const routeState: RouteState = i % 3 === 0 ? 'Active' : i % 3 === 1 ? 'Not-Active' : 'Completed';
+      // Distribute route states: Active, Not-Active, Completed, then repeat
+      const routeStates: RouteState[] = ['Active', 'Not-Active', 'Completed'];
+      const routeState = routeStates[i % 3];
 
       const r: Route = {
         routeId: this.guid(),
@@ -133,5 +138,44 @@ export class RoutesService {
 
   getPassengersByGroup(groupId: string): Passenger[] {
     return this.passengers.filter(p => p.groupId === groupId);
+  }
+
+  // Route activation/completion management
+  getActiveRoute(): string | null {
+    return this.activeRouteSubject.value;
+  }
+
+  activateRoute(routeId: string, driverId: string): boolean {
+    // Check if driver already has an active route
+    const currentActiveRoute = this.activeRouteSubject.value;
+    if (currentActiveRoute) {
+      const activeRoute = this.routes.find(r => r.routeId === currentActiveRoute);
+      if (activeRoute && activeRoute.driverId === driverId && activeRoute.routeState !== 'Completed') {
+        console.warn('Driver already has an active route');
+        return false;
+      }
+    }
+
+    const route = this.routes.find(r => r.routeId === routeId);
+    if (route && route.driverId === driverId) {
+      route.routeState = 'Active';
+      this.activeRouteSubject.next(routeId);
+      return true;
+    }
+    return false;
+  }
+
+  completeRoute(routeId: string): boolean {
+    const route = this.routes.find(r => r.routeId === routeId);
+    if (route) {
+      route.routeState = 'Completed';
+      this.activeRouteSubject.next(null);
+      return true;
+    }
+    return false;
+  }
+
+  getRouteById(routeId: string): Route | undefined {
+    return this.routes.find(r => r.routeId === routeId);
   }
 }

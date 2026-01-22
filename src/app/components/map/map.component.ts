@@ -172,10 +172,9 @@ export class MapComponent implements OnInit, AfterViewInit {
           }
           
           this.route = L.polyline(latLngRoute, {
-            color: '#ff7e00',
-            weight: 4,
-            opacity: 0.8,
-            dashArray: '5, 5',
+            color: '#4e63f1',
+            weight: 5,
+            opacity: 0.9,
           }).addTo(this.map);
         }
       },
@@ -183,10 +182,9 @@ export class MapComponent implements OnInit, AfterViewInit {
         console.warn('OSRM routing failed, using straight line:', error);
         // Fallback to straight line polyline
         this.route = L.polyline(coordinates, {
-          color: '#ff7e00',
-          weight: 3,
-          opacity: 0.7,
-          dashArray: '5, 5',
+          color: '#4A90E2',
+          weight: 5,
+          opacity: 0.9,
         }).addTo(this.map);
       }
     );

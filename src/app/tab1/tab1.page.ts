@@ -18,6 +18,9 @@ export class Tab1Page implements OnInit {
   driversMap: Record<string, Driver> = {};
   groupsMap: Record<string, GroupRoutes> = {};
   loggedInUser: User | null = null;
+  activeRoutes: Route[] = [];
+  notActiveRoutes: Route[] = [];
+  completedRoutes: Route[] = [];
 
   constructor(
     private routesService: RoutesService,
@@ -32,13 +35,22 @@ export class Tab1Page implements OnInit {
     this.routesService.getDrivers().forEach(d => (this.driversMap[d.id] = d));
     this.routesService.getGroups().forEach(g => (this.groupsMap[g.id] = g));
     
-    // Filter routes for logged-in driver
+    // Get all routes for logged-in driver
     if (this.loggedInUser && this.loggedInUser.driverId) {
       this.routes = this.usersService.getDriverRoutes(this.loggedInUser.driverId);
     } else {
       // If no user logged in, show all routes (fallback)
       this.routes = this.routesService.getRoutes();
     }
+    
+    // Organize routes by state
+    this.organizeRoutesByState();
+  }
+
+  organizeRoutesByState() {
+    this.activeRoutes = this.routes.filter(r => r.routeState === 'Active');
+    this.notActiveRoutes = this.routes.filter(r => r.routeState === 'Not-Active');
+    this.completedRoutes = this.routes.filter(r => r.routeState === 'Completed');
   }
 
   passengerCount(groupId: string) {

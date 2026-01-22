@@ -84,6 +84,36 @@
               <p>{{ driverDetails.contact.email || 'N/A' }}</p>
             </ion-col>
           </ion-row>
+
+          <!-- Route Action Buttons -->
+          <ion-row>
+            <ion-col size="12">
+              <ion-button 
+                *ngIf="selectedRoute.routeState !== 'Active' && selectedRoute.routeState !== 'Completed'"
+                expand="block" 
+                color="success"
+                (click)="activateRoute()">
+                <ion-icon slot="start" name="play"></ion-icon>
+                Activate Route
+              </ion-button>
+              <ion-button 
+                *ngIf="selectedRoute.routeState === 'Active'"
+                expand="block" 
+                color="danger"
+                (click)="completeRoute()">
+                <ion-icon slot="start" name="checkmark"></ion-icon>
+                Complete Route
+              </ion-button>
+              <ion-button 
+                *ngIf="selectedRoute.routeState === 'Completed'"
+                expand="block" 
+                color="medium"
+                disabled>
+                <ion-icon slot="start" name="checkmark-done"></ion-icon>
+                Route Completed
+              </ion-button>
+            </ion-col>
+          </ion-row>
         </ion-grid>
       </ion-card-content>
     </ion-card>
