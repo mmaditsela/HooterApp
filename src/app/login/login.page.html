@@ -29,6 +29,15 @@
             ></ion-input>
           </ion-item>
 
+          <!-- Role Selection -->
+          <ion-item>
+            <ion-label>Login as</ion-label>
+            <ion-select [(ngModel)]="loginRole" name="loginRole" interface="popover">
+              <ion-select-option value="driver">Driver</ion-select-option>
+              <ion-select-option value="passenger">Passenger</ion-select-option>
+            </ion-select>
+          </ion-item>
+
           <!-- Error Message -->
           <div *ngIf="errorMessage" class="error-message">
             <ion-text color="danger">
@@ -48,10 +57,15 @@
           </ion-button>
         </form>
 
+        <!-- Register Link -->
+        <div class="register-link">
+          <p>Don't have an account? <a [routerLink]="['/register']">Register here</a></p>
+        </div>
+
         <!-- Demo Credentials -->
         <div class="demo-info">
           <ion-text color="medium">
-            <p><small>Demo credentials: admin / admin</small></p>
+            <p><small>Demo: driver0 / password (Driver) or passenger0 / password (Passenger)</small></p>
           </ion-text>
         </div>
       </ion-card-content>

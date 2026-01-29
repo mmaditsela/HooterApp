@@ -8,4 +8,6 @@ export interface Passenger {
   dropoffLocation: { lat: number; lng: number };
   contact: { phone?: string; email?: string };
   status: PassengerStatus;
+  actualPickupTime?: Date;
+  actualDropoffTime?: Date;
 }

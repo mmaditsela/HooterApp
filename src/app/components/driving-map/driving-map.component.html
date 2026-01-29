@@ -1,7 +1,7 @@
 <div class="driving-map-container">
   <!-- Active Route Map View -->
   <div *ngIf="activeRoute" class="map-wrapper">
-    <div class="distance-panel">
+    <div *ngIf="!isPassenger" class="distance-panel">
       <h3>Remaining Stops</h3>
       <ion-list>
         <ion-item *ngFor="let stop of routeStops.slice(currentStopIndex); let i = index">
@@ -12,6 +12,15 @@
           <ion-badge slot="end" [color]="stop.type === 'pickup' ? 'primary' : 'secondary'">
             {{ stop.distance.toFixed(0) }}m
           </ion-badge>
+          <ion-button 
+            *ngIf="stop.type === 'pickup' && !stop.passenger.actualPickupTime"
+            slot="end" 
+            size="small" 
+            color="success"
+            (click)="markAsPickedUp(stop)">
+            <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+            Picked Up
+          </ion-button>
         </ion-item>
       </ion-list>
     </div>
@@ -47,7 +56,7 @@
 
           <ion-card-content>
             <p><strong>Time:</strong> {{ item.group.startTime }} - {{ item.group.endTime }}</p>
-            <p><strong>Days:</strong> {{ item.group.activeDays?.join(', ') || '' }}</p>
+            <p><strong>Days:</strong> {{ item.group.activeDays.join(', ') || '' }}</p>
             <p><strong>Status:</strong> <ion-badge color="success">{{ item.route.routeState }}</ion-badge></p>
           </ion-card-content>
         </ion-card>

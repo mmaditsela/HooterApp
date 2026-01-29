@@ -3,5 +3,11 @@
   "integrations": {
     "capacitor": {}
   },
-  "type": "angular"
+  "type": "angular",
+  "proxies": [
+    {
+      "path": "/nominatim",
+      "proxyUrl": "https://nominatim.openstreetmap.org"
+    }
+  ]
 }

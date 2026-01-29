@@ -43,4 +43,9 @@
     border-radius: 8px;
     box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
   }
+
+  // Double border effect for current user's marker (thin dark blue)
+  .current-user-marker {
+    box-shadow: 0 0 0 1px #ffffff, 0 0 0 2px #003366;
+  }
 }

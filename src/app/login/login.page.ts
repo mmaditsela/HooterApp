@@ -11,6 +11,7 @@ import { AuthService } from '../services/auth.service';
 export class LoginPage implements OnInit {
   username: string = '';
   password: string = '';
+  loginRole: string = 'driver';
   errorMessage: string = '';
   isLoading: boolean = false;
 

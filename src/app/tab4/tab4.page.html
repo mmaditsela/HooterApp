@@ -11,5 +11,173 @@
     </ion-toolbar>
   </ion-header>
 
-  <app-explore-container name="Account"></app-explore-container>
+  <div *ngIf="!currentUser" class="empty-state">
+    <ion-text color="medium">
+      <p>Please login to view your account</p>
+    </ion-text>
+  </div>
+
+  <ion-card *ngIf="currentUser">
+    <ion-card-header>
+      <ion-card-title>Profile Information</ion-card-title>
+      <ion-card-subtitle>{{ isDriver ? 'Driver Account' : 'Passenger Account' }}</ion-card-subtitle>
+    </ion-card-header>
+
+    <ion-card-content>
+      <!-- Personal Information -->
+      <ion-item-divider>
+        <ion-label>Personal Information</ion-label>
+      </ion-item-divider>
+
+      <ion-item>
+        <ion-label position="floating">First Name *</ion-label>
+        <ion-input [(ngModel)]="firstName" [readonly]="!isEditing" required></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Last Name *</ion-label>
+        <ion-input [(ngModel)]="lastName" [readonly]="!isEditing" required></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Phone Number</ion-label>
+        <ion-input [(ngModel)]="phone" [readonly]="!isEditing" type="tel"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Email</ion-label>
+        <ion-input [(ngModel)]="email" [readonly]="!isEditing" type="email"></ion-input>
+      </ion-item>
+
+      <!-- Driver-specific fields -->
+      <div *ngIf="isDriver">
+        <ion-item-divider style="margin-top: 20px;">
+          <ion-label>Car Details</ion-label>
+        </ion-item-divider>
+
+        <ion-item>
+          <ion-label position="floating">Registration Number *</ion-label>
+          <ion-input [(ngModel)]="carRegistration" [readonly]="!isEditing" required></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Car Color *</ion-label>
+          <ion-input [(ngModel)]="carColor" [readonly]="!isEditing" required></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Passenger Capacity *</ion-label>
+          <ion-input [(ngModel)]="carCapacity" [readonly]="!isEditing" type="number" required></ion-input>
+        </ion-item>
+      </div>
+
+      <!-- Passenger-specific fields -->
+      <div *ngIf="!isDriver">
+        <ion-item-divider style="margin-top: 20px;">
+          <ion-label>Location Details</ion-label>
+        </ion-item-divider>
+
+        <ion-note *ngIf="hasActiveRoute && isEditing" color="warning" style="padding: 10px; display: block;">
+          <ion-icon name="warning-outline"></ion-icon>
+          You cannot change addresses while in an active route
+        </ion-note>
+
+        <!-- Pickup Address -->
+        <ion-item>
+          <ion-label position="floating">Pickup Address</ion-label>
+          <ion-input [(ngModel)]="pickupAddress" readonly></ion-input>
+        </ion-item>
+
+        <div *ngIf="isEditing && !hasActiveRoute">
+          <ion-item>
+            <ion-label position="floating">Search New Pickup Address</ion-label>
+            <ion-input 
+              [(ngModel)]="pickupSearchQuery" 
+              type="text" 
+              placeholder="Type to search..."
+              (ionInput)="searchPickupAddress()">
+            </ion-input>
+          </ion-item>
+          
+          <ion-item *ngIf="pickupSearchResults.length > 0">
+            <ion-label position="floating">Select Pickup Address</ion-label>
+            <ion-select 
+              [(ngModel)]="pickupAddress"
+              interface="action-sheet"
+              placeholder="Choose from results"
+              (ionChange)="onPickupSelected()">
+              <ion-select-option 
+                *ngFor="let result of pickupSearchResults" 
+                [value]="result.display_name">
+                {{ result.display_name }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </div>
+
+        <!-- Dropoff Address -->
+        <ion-item>
+          <ion-label position="floating">Dropoff Address</ion-label>
+          <ion-input [(ngModel)]="dropoffAddress" readonly></ion-input>
+        </ion-item>
+
+        <div *ngIf="isEditing && !hasActiveRoute">
+          <ion-item>
+            <ion-label position="floating">Search New Dropoff Address</ion-label>
+            <ion-input 
+              [(ngModel)]="dropoffSearchQuery" 
+              type="text" 
+              placeholder="Type to search..."
+              (ionInput)="searchDropoffAddress()">
+            </ion-input>
+          </ion-item>
+          
+          <ion-item *ngIf="dropoffSearchResults.length > 0">
+            <ion-label position="floating">Select Dropoff Address</ion-label>
+            <ion-select 
+              [(ngModel)]="dropoffAddress"
+              interface="action-sheet"
+              placeholder="Choose from results"
+              (ionChange)="onDropoffSelected()">
+              <ion-select-option 
+                *ngFor="let result of dropoffSearchResults" 
+                [value]="result.display_name">
+                {{ result.display_name }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <ion-button 
+        *ngIf="!isEditing" 
+        expand="block" 
+        color="primary"
+        (click)="toggleEdit()"
+        style="margin-top: 20px;">
+        <ion-icon name="create-outline" slot="start"></ion-icon>
+        Edit Profile
+      </ion-button>
+
+      <div *ngIf="isEditing" style="margin-top: 20px;">
+        <ion-button 
+          expand="block" 
+          color="success"
+          (click)="saveChanges()">
+          <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+          Save Changes
+        </ion-button>
+        
+        <ion-button 
+          expand="block" 
+          color="medium"
+          fill="outline"
+          (click)="toggleEdit()">
+          <ion-icon name="close-outline" slot="start"></ion-icon>
+          Cancel
+        </ion-button>
+      </div>
+    </ion-card-content>
+  </ion-card>
 </ion-content>

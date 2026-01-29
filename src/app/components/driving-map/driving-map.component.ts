@@ -44,6 +44,7 @@ export class DrivingMapComponent implements OnInit, AfterViewInit, OnDestroy {
   completedRoutes: Array<{route: Route; group: GroupRoutes; driver: Driver}> = [];
   driversMap: Record<string, Driver> = {};
   groupsMap: Record<string, GroupRoutes> = {};
+  isPassenger: boolean = false;
 
   constructor(
     private routesService: RoutesService,
@@ -52,6 +53,8 @@ export class DrivingMapComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    const loggedInUser = this.usersService.getLoggedInUser();
+    this.isPassenger = loggedInUser?.role === 'passenger';
     this.loadActiveRoute();
     this.loadCompletedRoutes();
   }
@@ -195,19 +198,58 @@ export class DrivingMapComponent implements OnInit, AfterViewInit, OnDestroy {
       .addTo(this.map)
       .bindPopup(`<b>Driver</b><br/>${this.driver.name} ${this.driver.surname}`);
 
-    // Add stop markers
+    // Add stop markers with numbered labels for pickup order
+    let pickupNumber = 1;
+    let dropoffNumber = 1;
+    
     this.routeStops.forEach((stop, index) => {
       const color = stop.type === 'pickup' ? this.getStatusColor(stop.passenger.status) : '#fd00b6';
+      const isPickup = stop.type === 'pickup';
+      const orderNumber = isPickup ? pickupNumber++ : dropoffNumber++;
+      
+      // Create circle marker
       const marker = L.circleMarker([stop.lat, stop.lng], {
-        radius: 6,
+        radius: 8,
         fillColor: color,
         color: color,
         weight: 2,
         opacity: 1,
         fillOpacity: 0.7,
-      })
-        .addTo(this.map)
-        .bindPopup(`<b>${stop.passenger.nameSurname}</b><br/>${stop.type}<br/>Distance: ${stop.distance.toFixed(0)}m`);
+      }).addTo(this.map);
+      
+      // Create number label with icon
+      const iconHtml = `
+        <div style="
+          background-color: ${color};
+          border: 2px solid white;
+          border-radius: 50%;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+          font-size: 14px;
+          color: white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        ">
+          ${orderNumber}
+        </div>
+      `;
+      
+      const numberMarker = L.marker([stop.lat, stop.lng], {
+        icon: L.divIcon({
+          html: iconHtml,
+          className: 'stop-number-marker',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        })
+      }).addTo(this.map);
+      
+      // Add popup to both markers
+      const popupContent = `<b>${stop.passenger.nameSurname}</b><br/>${stop.type} #${orderNumber}<br/>Distance: ${stop.distance.toFixed(0)}m`;
+      marker.bindPopup(popupContent);
+      numberMarker.bindPopup(popupContent);
       
       stop.marker = marker;
     });
@@ -345,6 +387,11 @@ export class DrivingMapComponent implements OnInit, AfterViewInit, OnDestroy {
     // Update driver marker position
     this.driverMarker.setLatLng([this.currentDriverPosition.lat, this.currentDriverPosition.lng]);
     
+    // Update driver location in service for real-time tracking
+    if (this.driver) {
+      this.driver.location = { ...this.currentDriverPosition };
+    }
+    
     // Update distances
     this.updateDistances();
     
@@ -363,6 +410,47 @@ export class DrivingMapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.routeStops.forEach(stop => {
       stop.distance = this.calculateDistance(this.currentDriverPosition, stop);
     });
+  }
+
+  markAsPickedUp(stop: RouteStop): void {
+    if (stop.type === 'pickup') {
+      // Set the actual pickup time
+      this.routesService.setPassengerPickupTime(stop.passenger.id);
+      
+      // Update local passenger object
+      stop.passenger.actualPickupTime = new Date();
+      
+      // Find the index of this stop in the routeStops array
+      const stopIndex = this.routeStops.findIndex(s => 
+        s.passenger.id === stop.passenger.id && s.type === stop.type
+      );
+      
+      if (stopIndex !== -1) {
+        // Remove the marker from the map
+        if (this.routeStops[stopIndex].marker) {
+          this.map.removeLayer(this.routeStops[stopIndex].marker);
+        }
+        
+        // If this was the current stop, advance to the next one
+        if (stopIndex === this.currentStopIndex) {
+          this.currentStopIndex++;
+        }
+        
+        // Remove the stop from the array
+        this.routeStops.splice(stopIndex, 1);
+        
+        // If there are more stops, recalculate the route
+        if (this.currentStopIndex < this.routeStops.length) {
+          this.fetchActualRoute();
+        } else {
+          // No more stops, just redraw the map
+          this.drawRoute();
+        }
+        
+        // Update distances for remaining stops
+        this.updateDistances();
+      }
+    }
   }
 
   private calculateDistance(point1: { lat: number; lng: number }, point2: { lat: number; lng: number }): number {

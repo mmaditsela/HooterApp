@@ -11,6 +11,109 @@
     </ion-toolbar>
   </ion-header>
 
+  <!-- Add Route Button (Driver Only) -->
+  <div *ngIf="isDriver && currentDriverId && !selectedRoute" style="padding: 12px;">
+    <ion-button expand="block" color="primary" (click)="toggleCreateRoute()">
+      <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+      Add Route
+    </ion-button>
+  </div>
+
+  <!-- Join Route Button (Passenger Only) -->
+  <div *ngIf="!isDriver && currentPassengerId && !selectedRoute" style="padding: 12px;">
+    <ion-button expand="block" color="primary" (click)="toggleJoinRoute()">
+      <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+      Join Route
+    </ion-button>
+  </div>
+
+  <!-- Join Route Section (Passenger Only) -->
+  <ion-card *ngIf="!isDriver && currentPassengerId && showJoinRoute" style="margin:12px">
+    <ion-card-header>
+      <ion-card-title>Join Route</ion-card-title>
+      <ion-card-subtitle>Enter joining code or scan QR code</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-item>
+        <ion-label position="floating">Joining Code</ion-label>
+        <ion-input [(ngModel)]="joiningCode" type="text" placeholder="Enter code"></ion-input>
+      </ion-item>
+
+      <ion-button expand="block" color="primary" (click)="joinRouteByCode()" [disabled]="isJoiningRoute">
+        <ion-spinner *ngIf="isJoiningRoute" name="crescent"></ion-spinner>
+        <span *ngIf="!isJoiningRoute">Join Route</span>
+      </ion-button>
+
+      <ion-button expand="block" color="secondary" (click)="scanQRCode()" fill="outline">
+        <ion-icon slot="start" name="qr-code-outline"></ion-icon>
+        Scan QR Code
+      </ion-button>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Create Route Section (Driver Only) -->
+  <ion-card *ngIf="isDriver && currentDriverId && !selectedRoute && showCreateRoute" style="margin:12px">
+    <ion-card-header>
+      <ion-card-title>Create New Route</ion-card-title>
+      <ion-card-subtitle>Set route details for your passengers</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-item>
+        <ion-label position="floating">Route Name</ion-label>
+        <ion-input [(ngModel)]="newRouteName" type="text"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Start Time (HH:mm)</ion-label>
+        <ion-input [(ngModel)]="newRouteStartTime" type="time"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">End Time (HH:mm)</ion-label>
+        <ion-input [(ngModel)]="newRouteEndTime" type="time"></ion-input>
+      </ion-item>
+
+      <ion-item lines="none">
+        <ion-label>Active Days</ion-label>
+      </ion-item>
+      <ion-list>
+        <ion-item>
+          <ion-checkbox slot="start" [checked]="isDaySelected('Mon')" (ionChange)="toggleDay('Mon')"></ion-checkbox>
+          <ion-label>Mon</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-checkbox slot="start" [checked]="isDaySelected('Tue')" (ionChange)="toggleDay('Tue')"></ion-checkbox>
+          <ion-label>Tue</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-checkbox slot="start" [checked]="isDaySelected('Wed')" (ionChange)="toggleDay('Wed')"></ion-checkbox>
+          <ion-label>Wed</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-checkbox slot="start" [checked]="isDaySelected('Thu')" (ionChange)="toggleDay('Thu')"></ion-checkbox>
+          <ion-label>Thu</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-checkbox slot="start" [checked]="isDaySelected('Fri')" (ionChange)="toggleDay('Fri')"></ion-checkbox>
+          <ion-label>Fri</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-checkbox slot="start" [checked]="isDaySelected('Sat')" (ionChange)="toggleDay('Sat')"></ion-checkbox>
+          <ion-label>Sat</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-checkbox slot="start" [checked]="isDaySelected('Sun')" (ionChange)="toggleDay('Sun')"></ion-checkbox>
+          <ion-label>Sun</ion-label>
+        </ion-item>
+      </ion-list>
+
+      <ion-button expand="block" color="primary" (click)="createRoute()" [disabled]="isCreatingRoute">
+        <ion-spinner *ngIf="isCreatingRoute" name="crescent"></ion-spinner>
+        <span *ngIf="!isCreatingRoute">Create Route</span>
+      </ion-button>
+    </ion-card-content>
+  </ion-card>
+
   <!-- Route Details Card (Top Half) -->
   <div *ngIf="selectedRoute && groupDetails && driverDetails" class="route-details-section" [class.collapsed]="!routeDetailsExpanded">
     <div class="route-details-header">
@@ -85,8 +188,8 @@
             </ion-col>
           </ion-row>
 
-          <!-- Route Action Buttons -->
-          <ion-row>
+          <!-- Route Action Buttons (Driver Only) -->
+          <ion-row *ngIf="isDriver">
             <ion-col size="12">
               <ion-button 
                 *ngIf="selectedRoute.routeState !== 'Active' && selectedRoute.routeState !== 'Completed'"
@@ -126,8 +229,8 @@
     [passengers]="passengers">
   </app-map>
 
-  <!-- Passengers Section (Bottom Half) -->
-  <div class="passengers-section" *ngIf="passengers.length > 0">
+  <!-- Passengers Section (Bottom Half) - Driver Only -->
+  <div class="passengers-section" *ngIf="isDriver && passengers.length > 0">
     <ion-item-divider>
       <ion-label>Passengers ({{ passengers.length }})</ion-label>
     </ion-item-divider>
@@ -147,6 +250,48 @@
       </ion-item>
     </ion-list>
   </div>
+
+  <!-- Passenger Status Control (Passenger Only) -->
+  <ion-card *ngIf="!isDriver && currentPassengerId && selectedRoute" style="margin:12px">
+    <ion-card-header>
+      <ion-card-title>Your Status</ion-card-title>
+      <ion-card-subtitle>Update your status for this route</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-item *ngIf="getCurrentPassenger()" lines="none">
+        <ion-label>
+          <h2>Current Status</h2>
+          <p>{{ getCurrentPassenger()?.status | titlecase }}</p>
+        </ion-label>
+        <ion-badge 
+          slot="end" 
+          [color]="getCurrentPassenger()?.status === 'ready' ? 'success' : getCurrentPassenger()?.status === 'not-ready' ? 'warning' : getCurrentPassenger()?.status === 'absent' ? 'danger' : 'medium'">
+          {{ getCurrentPassenger()?.status | titlecase }}
+        </ion-badge>
+      </ion-item>
+
+      <ion-list>
+        <ion-item>
+          <ion-button expand="block" color="success" (click)="updatePassengerStatus('ready')">
+            <ion-icon slot="start" name="checkmark-circle"></ion-icon>
+            Ready
+          </ion-button>
+        </ion-item>
+        <ion-item>
+          <ion-button expand="block" color="warning" (click)="updatePassengerStatus('not-ready')">
+            <ion-icon slot="start" name="time"></ion-icon>
+            Not Ready
+          </ion-button>
+        </ion-item>
+        <ion-item>
+          <ion-button expand="block" color="danger" (click)="updatePassengerStatus('absent')">
+            <ion-icon slot="start" name="close-circle"></ion-icon>
+            Absent
+          </ion-button>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
 
   <!-- No Route Selected Message -->
   <div *ngIf="!selectedRoute" class="empty-state">

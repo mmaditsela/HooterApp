@@ -35,9 +35,15 @@ export class Tab1Page implements OnInit {
     this.routesService.getDrivers().forEach(d => (this.driversMap[d.id] = d));
     this.routesService.getGroups().forEach(g => (this.groupsMap[g.id] = g));
     
-    // Get all routes for logged-in driver
-    if (this.loggedInUser && this.loggedInUser.driverId) {
-      this.routes = this.usersService.getDriverRoutes(this.loggedInUser.driverId);
+    // Get routes based on user role
+    if (this.loggedInUser) {
+      if (this.loggedInUser.role === 'driver' && this.loggedInUser.driverId) {
+        // Drivers see their routes
+        this.routes = this.usersService.getDriverRoutes(this.loggedInUser.driverId);
+      } else if (this.loggedInUser.role === 'passenger' && this.loggedInUser.passengerId) {
+        // Passengers see only routes they are part of
+        this.routes = this.usersService.getPassengerRoutes(this.loggedInUser.passengerId);
+      }
     } else {
       // If no user logged in, show all routes (fallback)
       this.routes = this.routesService.getRoutes();

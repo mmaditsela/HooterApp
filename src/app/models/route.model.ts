@@ -5,4 +5,5 @@ export interface Route {
   driverId: string;
   groupId: string;
   routeState: RouteState;
+  completedAt?: Date;
 }

@@ -1,0 +1,207 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Register</ion-title>
+    <ion-buttons slot="start">
+      <ion-button (click)="goToLogin()">
+        <ion-icon name="arrow-back"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="register-container">
+    <h2>Create Account</h2>
+    
+    <form (ngSubmit)="register()">
+      <!-- Role Selection -->
+      <ion-item>
+        <ion-label>Register as</ion-label>
+        <ion-select [(ngModel)]="registrationRole" name="registrationRole" interface="popover" (ionChange)="onRoleChange()">
+          <ion-select-option value="driver">Driver</ion-select-option>
+          <ion-select-option value="passenger">Passenger</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <!-- Account Information -->
+      <ion-item-divider style="margin-top: 20px;">
+        <ion-label>Account Information</ion-label>
+      </ion-item-divider>
+
+      <ion-item>
+        <ion-label position="floating">Username *</ion-label>
+        <ion-input [(ngModel)]="username" name="username" type="text" required></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Password *</ion-label>
+        <ion-input [(ngModel)]="password" name="password" type="password" required></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Confirm Password *</ion-label>
+        <ion-input [(ngModel)]="confirmPassword" name="confirmPassword" type="password" required></ion-input>
+      </ion-item>
+
+      <!-- Personal Information -->
+      <ion-item-divider style="margin-top: 20px;">
+        <ion-label>Personal Information</ion-label>
+      </ion-item-divider>
+
+      <ion-item>
+        <ion-label position="floating">First Name *</ion-label>
+        <ion-input [(ngModel)]="firstName" name="firstName" type="text" required></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Last Name *</ion-label>
+        <ion-input [(ngModel)]="lastName" name="lastName" type="text" required></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Phone Number</ion-label>
+        <ion-input [(ngModel)]="phone" name="phone" type="tel" placeholder="+27-XX-XXX-XXXX"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Email</ion-label>
+        <ion-input [(ngModel)]="email" name="email" type="email"></ion-input>
+      </ion-item>
+
+      <!-- Car Details (Driver Only) -->
+      <div *ngIf="registrationRole === 'driver'">
+        <ion-item-divider style="margin-top: 20px;">
+          <ion-label>Car Details</ion-label>
+        </ion-item-divider>
+
+        <ion-item>
+          <ion-label position="floating">Registration Number *</ion-label>
+          <ion-input [(ngModel)]="carRegistration" name="carRegistration" type="text" placeholder="ABC 123 GP" required></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Car Color *</ion-label>
+          <ion-input [(ngModel)]="carColor" name="carColor" type="text" placeholder="White" required></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Passenger Capacity *</ion-label>
+          <ion-input [(ngModel)]="carCapacity" name="carCapacity" type="number" min="1" max="20" required></ion-input>
+        </ion-item>
+      </div>
+
+      <!-- Group Joining Code (Passenger Only) -->
+      <div *ngIf="registrationRole === 'passenger'">
+        <ion-item-divider style="margin-top: 20px;">
+          <ion-label>Route Group</ion-label>
+        </ion-item-divider>
+
+        <ion-item>
+          <ion-label position="floating">Joining Code (Optional)</ion-label>
+          <ion-input [(ngModel)]="joiningCode" name="joiningCode" type="text" placeholder="Enter group code" maxlength="6"></ion-input>
+        </ion-item>
+        <ion-note color="medium" style="padding: 10px;">You can join a route group later using the joining code provided by your driver</ion-note>
+
+        <ion-item-divider style="margin-top: 20px;">
+          <ion-label>Pickup Location</ion-label>
+        </ion-item-divider>
+
+        <ion-item>
+          <ion-label position="floating">Search Pickup Address *</ion-label>
+          <ion-input 
+            [(ngModel)]="pickupSearchQuery" 
+            name="pickupSearchQuery" 
+            type="text" 
+            placeholder="Type to search..."
+            (ionInput)="searchPickupAddress()"
+            required>
+          </ion-input>
+        </ion-item>
+        
+        <ion-item *ngIf="pickupSearchResults.length > 0">
+          <ion-label position="floating">Select Pickup Address *</ion-label>
+          <ion-select 
+            [(ngModel)]="pickupAddress" 
+            name="pickupAddress"
+            interface="action-sheet"
+            placeholder="Choose from results"
+            (ionChange)="onPickupSelected()">
+            <ion-select-option 
+              *ngFor="let result of pickupSearchResults" 
+              [value]="result.display_name">
+              {{ result.display_name }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        
+        <ion-button 
+          expand="block" 
+          fill="outline" 
+          size="small" 
+          (click)="useCurrentLocationForPickup()"
+          style="margin: 10px 16px;">
+          <ion-icon name="locate" slot="start"></ion-icon>
+          Use Current Location
+        </ion-button>
+        <ion-note *ngIf="pickupLat && pickupLng" color="success" style="padding: 10px;">
+          Selected: {{ pickupLat.toFixed(6) }}, {{ pickupLng.toFixed(6) }}
+        </ion-note>
+
+        <ion-item-divider style="margin-top: 20px;">
+          <ion-label>Dropoff Location</ion-label>
+        </ion-item-divider>
+
+        <ion-item>
+          <ion-label position="floating">Search Dropoff Address *</ion-label>
+          <ion-input 
+            [(ngModel)]="dropoffSearchQuery" 
+            name="dropoffSearchQuery" 
+            type="text" 
+            placeholder="Type to search..."
+            (ionInput)="searchDropoffAddress()"
+            required>
+          </ion-input>
+        </ion-item>
+        
+        <ion-item *ngIf="dropoffSearchResults.length > 0">
+          <ion-label position="floating">Select Dropoff Address *</ion-label>
+          <ion-select 
+            [(ngModel)]="dropoffAddress" 
+            name="dropoffAddress"
+            interface="action-sheet"
+            placeholder="Choose from results"
+            (ionChange)="onDropoffSelected()">
+            <ion-select-option 
+              *ngFor="let result of dropoffSearchResults" 
+              [value]="result.display_name">
+              {{ result.display_name }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        
+        <ion-button 
+          expand="block" 
+          fill="outline" 
+          size="small" 
+          (click)="useCurrentLocationForDropoff()"
+          style="margin: 10px 16px;">
+          <ion-icon name="locate" slot="start"></ion-icon>
+          Use Current Location
+        </ion-button>
+        <ion-note *ngIf="dropoffLat && dropoffLng" color="success" style="padding: 10px;">
+          Selected: {{ dropoffLat.toFixed(6) }}, {{ dropoffLng.toFixed(6) }}
+        </ion-note>
+      </div>
+
+      <!-- Register Button -->
+      <ion-button expand="block" type="submit" style="margin-top: 30px;">
+        Register
+      </ion-button>
+
+      <!-- Login Link -->
+      <div class="login-link">
+        <p>Already have an account? <a (click)="goToLogin()">Login here</a></p>
+      </div>
+    </form>
+  </div>
+</ion-content>

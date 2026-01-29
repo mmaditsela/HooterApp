@@ -1,8 +1,9 @@
-import { Component, Input, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, ElementRef, AfterViewInit, OnChanges, SimpleChanges } from '@angular/core';
 import { Driver } from '../../models/driver.model';
 import { Passenger } from '../../models/passenger.model';
 import { Geolocation } from '@capacitor/geolocation';
 import { HttpClient } from '@angular/common/http';
+import { UsersService } from '../../services/users.service';
 
 declare let L: any; // Leaflet library
 
@@ -12,7 +13,7 @@ declare let L: any; // Leaflet library
   styleUrls: ['./map.component.scss'],
   standalone: false,
 })
-export class MapComponent implements OnInit, AfterViewInit {
+export class MapComponent implements OnInit, AfterViewInit, OnChanges {
   @Input() driver: Driver | undefined;
   @Input() passengers: Passenger[] = [];
   @ViewChild('mapContainer', { static: false }) mapContainer!: ElementRef;
@@ -24,7 +25,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   isLoading: boolean = true;
   private currentLocation: { lat: number; lng: number } | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private usersService: UsersService) {}
 
   ngOnInit() {
     this.getCurrentLocation();
@@ -35,6 +36,31 @@ export class MapComponent implements OnInit, AfterViewInit {
     setTimeout(() => {
       this.initMap();
     }, 500);
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    // Refresh map when passengers data changes
+    if (changes['passengers'] && !changes['passengers'].firstChange && this.map) {
+      this.refreshMap();
+    }
+  }
+
+  private refreshMap() {
+    // Remove existing passenger markers
+    this.passengerMarkers.forEach(marker => {
+      if (this.map && marker) {
+        this.map.removeLayer(marker);
+      }
+    });
+    this.passengerMarkers = [];
+
+    // Remove existing route
+    if (this.route && this.map) {
+      this.map.removeLayer(this.route);
+    }
+
+    // Re-add markers and route
+    this.addPassengerMarkersAndRoute();
   }
 
   private async getCurrentLocation() {
@@ -75,38 +101,61 @@ export class MapComponent implements OnInit, AfterViewInit {
       attribution: '© OpenStreetMap',
     }).addTo(this.map);
 
-    // Add driver marker (blue) at current location
+    // Add driver marker (blue drop icon) at current location
+    const driverIcon = L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+    
     this.driverMarker = L.marker([mapCenter.lat, mapCenter.lng], {
-      radius: 8,
-      fillColor: '#0066cc',
-      color: '#0066cc',
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.8,
+      icon: driverIcon
     })
       .addTo(this.map)
       .bindPopup(`<b>Driver (Current Location)</b><br/>${this.driver.name} ${this.driver.surname}`);
 
     // Add passenger markers and create route
-    if (this.passengers.length > 0) {
-      const routeCoordinates: Array<[number, number]> = [[mapCenter.lat, mapCenter.lng]];
-      const dropoffCoordinates: Array<[number, number]> = [];
-      let markerIndex = 1;
+    this.addPassengerMarkersAndRoute();
 
-      // First pass: Add all pickup markers and collect coordinates
-      const activePassengers = this.passengers.filter((p) => p.status !== 'absent');
-      
-      activePassengers.forEach((p) => {
+    this.isLoading = false;
+  }
+
+  private addPassengerMarkersAndRoute() {
+    if (!this.map || this.passengers.length === 0) {
+      return;
+    }
+
+    const mapCenter = this.currentLocation || {
+      lat: this.driver!.location.lat,
+      lng: this.driver!.location.lng,
+    };
+
+    const routeCoordinates: Array<[number, number]> = [[mapCenter.lat, mapCenter.lng]];
+    const dropoffCoordinates: Array<[number, number]> = [];
+    let markerIndex = 1;
+
+    // First pass: Add all pickup markers and collect coordinates
+    const activePassengers = this.passengers.filter((p) => p.status !== 'absent');
+    
+    activePassengers.forEach((p) => {
         // Determine marker color based on status
         const color = this.getStatusColor(p.status);
+        
+        // Check if this is the logged-in passenger
+        const loggedInUser = this.usersService.getLoggedInUser();
+        const isCurrentUser = loggedInUser?.role === 'passenger' && loggedInUser?.passengerId === p.id;
 
         const pickupMarker = L.circleMarker([p.pickupLocation.lat, p.pickupLocation.lng], {
-          radius: 6,
+          radius: isCurrentUser ? 10 : 6,
           fillColor: color,
-          color: color,
-          weight: 2,
+          color: isCurrentUser ? '#003366' : color,
+          weight: isCurrentUser ? 3 : 2,
           opacity: 1,
           fillOpacity: 0.7,
+          className: isCurrentUser ? 'current-user-marker' : ''
         })
           .addTo(this.map)
           .bindPopup(`<b>Passenger ${markerIndex} (Pickup)</b><br/>${p.nameSurname}<br/>Status: ${p.status}`);
@@ -120,14 +169,19 @@ export class MapComponent implements OnInit, AfterViewInit {
       // Second pass: Add all dropoff markers
       markerIndex = 1;
       activePassengers.forEach((p) => {
+        // Check if this is the logged-in passenger
+        const loggedInUser = this.usersService.getLoggedInUser();
+        const isCurrentUser = loggedInUser?.role === 'passenger' && loggedInUser?.passengerId === p.id;
+        
         // Add dropoff marker
         const dropoffMarker = L.circleMarker([p.dropoffLocation.lat, p.dropoffLocation.lng], {
-          radius: 6,
+          radius: isCurrentUser ? 10 : 6,
           fillColor: '#fd00b6',
-          color: '#fd00b6',
-          weight: 2,
+          color: isCurrentUser ? '#003366' : '#fd00b6',
+          weight: isCurrentUser ? 3 : 2,
           opacity: 1,
           fillOpacity: 0.7,
+          className: isCurrentUser ? 'current-user-marker' : ''
         })
           .addTo(this.map)
           .bindPopup(`<b>Passenger ${markerIndex} (Dropoff)</b><br/>${p.nameSurname}`);
@@ -145,9 +199,6 @@ export class MapComponent implements OnInit, AfterViewInit {
       // Fit bounds to show all markers
       const group = L.featureGroup([this.driverMarker, ...this.passengerMarkers]);
       this.map.fitBounds(group.getBounds().pad(0.1));
-    }
-
-    this.isLoading = false;
   }
 
   private getActualRoute(coordinates: [number, number][]) {

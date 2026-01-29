@@ -13,5 +13,111 @@
     </ion-toolbar>
   </ion-header>
 
+  <!-- Passenger Distance Card (Passenger Only with Active Route) -->
+  <ion-card *ngIf="isPassenger && activeRoute && currentPassenger" style="margin:12px">
+    <ion-card-header>
+      <ion-card-title>Driver Location</ion-card-title>
+      <ion-card-subtitle>Track your driver's arrival</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <div style="text-align: center; padding: 20px;">
+        <ion-icon name="car" style="font-size: 48px; color: #0066cc;"></ion-icon>
+        <h1 style="font-size: 48px; margin: 20px 0; color: #0066cc;">
+          {{ distanceToDriver < 1000 ? (distanceToDriver | number:'1.0-0') + 'm' : ((distanceToDriver / 1000) | number:'1.1-1') + 'km' }}
+        </h1>
+        <p style="font-size: 18px; color: #666;">
+          {{ distanceToDriver < 100 ? 'Driver is arriving!' : 'Distance to your pickup location' }}
+        </p>
+        <ion-badge [color]="currentPassenger.status === 'ready' ? 'success' : currentPassenger.status === 'not-ready' ? 'warning' : 'medium'" style="font-size: 14px; padding: 8px 16px;">
+          Your Status: {{ currentPassenger.status | titlecase }}
+        </ion-badge>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Driving Map Component -->
   <app-driving-map></app-driving-map>
+
+  <!-- Trip History (Passenger Only) -->
+  <div *ngIf="isPassenger && getThisWeekTrips().length > 0">
+    <!-- Collapsible Trip History (when active route exists) -->
+    <ion-card *ngIf="activeRoute" style="margin:12px">
+      <ion-item button (click)="tripHistoryExpanded = !tripHistoryExpanded" lines="none">
+        <ion-label>
+          <h2><strong>Trip History</strong></h2>
+          <p>{{ getThisWeekTrips().length }} trip(s) this week</p>
+        </ion-label>
+        <ion-icon slot="end" [name]="tripHistoryExpanded ? 'chevron-up' : 'chevron-down'"></ion-icon>
+      </ion-item>
+      
+      <ion-card-content *ngIf="tripHistoryExpanded">
+        <ion-list>
+          <ion-item *ngFor="let trip of getThisWeekTrips()">
+            <ion-label>
+              <h2><strong>{{ trip.group.name }}</strong></h2>
+              <p>{{ formatDate(trip.route.completedAt) }}</p>
+              <p style="margin-top: 8px;">
+                <ion-icon name="arrow-up-circle" color="success"></ion-icon>
+                <strong>Pickup:</strong> {{ formatTime(trip.passenger.actualPickupTime) }}
+              </p>
+              <p>
+                <ion-icon name="arrow-down-circle" color="danger"></ion-icon>
+                <strong>Dropoff:</strong> {{ formatTime(trip.passenger.actualDropoffTime) }}
+              </p>
+              <p style="color: #666; font-size: 12px;">
+                Driver: {{ trip.driver.name }} {{ trip.driver.surname }}
+              </p>
+            </ion-label>
+            <ion-badge slot="end" color="success">Completed</ion-badge>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Expanded Trip History (when no active route) -->
+    <ion-card *ngIf="!activeRoute" style="margin:12px">
+      <ion-card-header>
+        <ion-card-title>Trip History</ion-card-title>
+        <ion-card-subtitle>Your trips this week</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list>
+          <ion-item *ngFor="let trip of getThisWeekTrips()">
+            <ion-label>
+              <h2><strong>{{ trip.group.name }}</strong></h2>
+              <p>{{ formatDate(trip.route.completedAt) }}</p>
+              <p style="margin-top: 8px;">
+                <ion-icon name="arrow-up-circle" color="success"></ion-icon>
+                <strong>Pickup:</strong> {{ formatTime(trip.passenger.actualPickupTime) }}
+              </p>
+              <p>
+                <ion-icon name="arrow-down-circle" color="danger"></ion-icon>
+                <strong>Dropoff:</strong> {{ formatTime(trip.passenger.actualDropoffTime) }}
+              </p>
+              <p style="color: #666; font-size: 12px;">
+                Driver: {{ trip.driver.name }} {{ trip.driver.surname }}
+              </p>
+            </ion-label>
+            <ion-badge slot="end" color="success">Completed</ion-badge>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Empty State (Passenger with no trips) -->
+  <div *ngIf="isPassenger && !activeRoute && getThisWeekTrips().length === 0">
+    <ion-card style="margin:12px">
+      <ion-card-header>
+        <ion-card-title>Trip History</ion-card-title>
+        <ion-card-subtitle>Your trips this week</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <div style="text-align: center; padding: 20px; color: #666;">
+          <ion-icon name="calendar-outline" style="font-size: 48px; opacity: 0.5;"></ion-icon>
+          <p style="margin-top: 10px;">No trips this week</p>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
 </ion-content>

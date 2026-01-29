@@ -10,4 +10,9 @@ export interface Driver {
     phone?: string;
     email?: string;
   };
+  car: {
+    registration: string;
+    color: string;
+    numberOfPassengers: number;
+  };
 }
